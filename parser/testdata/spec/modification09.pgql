@@ -1,0 +1,4 @@
+INSERT EDGE e BETWEEN x AND y
+  FROM MATCH (x)
+     , MATCH (y) -> (z)
+ WHERE id(x) = 1

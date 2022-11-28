@@ -1,0 +1,2 @@
+SELECT src, ARRAY_AGG(e.weight), dst
+  FROM MATCH ANY SHORTEST (src) -[e]->* (dst) WHERE SUM(e."cost") < 100

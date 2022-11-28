@@ -1,0 +1,3 @@
+SELECT p2.name AS friend, u.name AS university
+  FROM MATCH (u:University) <-[:studentOf]- (p1:Person) -[:knows]-> (p2:Person) -[:studentOf]-> (u)
+ WHERE p1.name = 'Lee'

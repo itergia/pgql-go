@@ -1,0 +1,3 @@
+SELECT SUM(COUNT(e)) AS sumOfPathLengths
+  FROM MATCH ANY SHORTEST (a:Account) -[e:transaction]->* (b:Account)
+ WHERE a.number = 10039 AND (b.number = 1001 OR b.number = 2090)

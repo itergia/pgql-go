@@ -1,0 +1,24 @@
+CREATE PROPERTY GRAPH financial_transactions
+  VERTEX TABLES (
+    Persons LABEL Person PROPERTIES ( name ),
+    Companies LABEL Company PROPERTIES ( name ),
+    Accounts LABEL Account PROPERTIES ( number )
+  )
+  EDGE TABLES (
+    Transactions
+      SOURCE KEY ( from_account ) REFERENCES Accounts ( number )
+      DESTINATION KEY ( to_account ) REFERENCES Accounts ( number )
+      LABEL transaction PROPERTIES ( amount ),
+    Accounts AS PersonOwner
+      SOURCE KEY ( number ) REFERENCES Accounts ( number )
+      DESTINATION Persons
+      LABEL owner NO PROPERTIES,
+    Accounts AS CompanyOwner
+      SOURCE KEY ( number ) REFERENCES Accounts ( number )
+      DESTINATION Companies
+      LABEL owner NO PROPERTIES,
+    Persons AS worksFor
+      SOURCE KEY ( id ) REFERENCES Persons ( id )
+      DESTINATION Companies
+      NO PROPERTIES
+  )

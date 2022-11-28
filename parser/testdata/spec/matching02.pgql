@@ -1,0 +1,2 @@
+SELECT a.name AS a, b.name AS b
+  FROM MATCH (a:Person) -[e:knows]-> (b:Person)

@@ -1,0 +1,3 @@
+  PATH two_hops AS () -[e1]- () -[e2]- ()
+SELECT *
+  FROM MATCH (n) -/:two_hops*/-> (m)

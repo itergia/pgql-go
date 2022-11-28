@@ -1,0 +1,4 @@
+  SELECT label(n) AS srcLbl, label(e) AS edgeLbl, label(m) AS dstLbl, COUNT(*)
+    FROM MATCH (n) -[e]-> (m)
+GROUP BY srcLbl, edgeLbl, dstLbl
+ORDER BY COUNT(*) DESC

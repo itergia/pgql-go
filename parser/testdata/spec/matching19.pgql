@@ -1,0 +1,3 @@
+  SELECT label(n), n.*
+    FROM MATCH (n)
+ORDER BY "number", "name"

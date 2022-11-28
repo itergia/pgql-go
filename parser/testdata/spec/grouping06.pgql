@@ -1,0 +1,5 @@
+SELECT COUNT(*) AS numTransactions,
+       SUM(out.amount) AS totalOutgoing,
+       LISTAGG(out.amount, ', ') AS amounts
+  FROM MATCH (a:Account) -[:owner]-> (owner:Person|Company)
+     , MATCH (a) -[out:transaction]-> (:Account)

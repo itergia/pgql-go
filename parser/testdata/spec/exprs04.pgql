@@ -1,0 +1,3 @@
+SELECT n.name
+  FROM MATCH (n)
+ WHERE n.name IS NOT NULL

@@ -1,0 +1,4 @@
+SELECT y.name
+  FROM MATCH (x) -> (y)
+ WHERE x.name = 'Jake'
+   AND y.age > 25

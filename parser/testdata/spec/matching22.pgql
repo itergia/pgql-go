@@ -1,0 +1,3 @@
+  SELECT p.first_name, p.last_name
+    FROM MATCH (p:Person)
+ORDER BY p.first_name, p.last_name

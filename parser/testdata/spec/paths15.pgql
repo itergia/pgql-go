@@ -1,0 +1,4 @@
+PATH macro1 AS (v1:Generator) -[e1:has_connector]-> (v2:Connector)
+SELECT COUNT(*)
+FROM MATCH (generatorA) <-/:macro1+/- (generatorB)
+WHERE generatorA.name = 'AEH382'

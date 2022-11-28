@@ -1,0 +1,4 @@
+  SELECT dst.number, LISTAGG(e.amount, ' + ') || ' = ', SUM(e.amount)
+    FROM MATCH ANY (src:Account) -[e]->+ (dst:Account)
+   WHERE src.number = 8021
+ORDER BY dst.number

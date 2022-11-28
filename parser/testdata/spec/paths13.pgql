@@ -1,0 +1,6 @@
+  PATH has_parent AS () -[:has_father|has_mother]-> (:Person)
+SELECT ancestor.name
+  FROM MATCH (p1:Person) -/:has_parent+/-> (ancestor)
+     , MATCH (p2:Person) -/:has_parent+/-> (ancestor)
+ WHERE p1.name = 'Mario'
+   AND p2.name = 'Luigi'

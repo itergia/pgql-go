@@ -1,0 +1,5 @@
+  SELECT a.number, p.name
+    FROM MATCH (a:Account) -[:owner]-> (p:Person)
+           ON financial_transactions
+           ONE ROW PER MATCH
+ORDER BY a.number

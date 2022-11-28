@@ -1,0 +1,3 @@
+SELECT c.name
+  FROM MATCH (c:Class) -/:subclass_of*/-> (arrayList:Class)
+ WHERE arrayList.name = 'ArrayList'

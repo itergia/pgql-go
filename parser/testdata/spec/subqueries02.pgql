@@ -1,0 +1,3 @@
+SELECT a.name
+  FROM MATCH (a)
+ WHERE a.age > ( SELECT AVG(b.age) FROM MATCH (a) -[:friendOf]-> (b) )

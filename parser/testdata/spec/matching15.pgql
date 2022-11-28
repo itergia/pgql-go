@@ -1,0 +1,2 @@
+SELECT n, m, n.age AS age
+  FROM MATCH (n:Person) -[e:friend_of]-> (m:Person)

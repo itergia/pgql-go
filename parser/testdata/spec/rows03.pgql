@@ -1,0 +1,6 @@
+  SELECT v.number AS account_nr, ELEMENT_NUMBER(v) AS elem_nr
+    FROM MATCH ANY (a1:Account) -[:transaction]->* (a2:Account)
+           ON financial_transactions
+           ONE ROW PER VERTEX ( v )
+   WHERE a1.number = 1001 AND a2.number = 8021
+ORDER BY ELEMENT_NUMBER(v)

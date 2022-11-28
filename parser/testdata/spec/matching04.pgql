@@ -1,0 +1,2 @@
+SELECT n.name, n.dob
+  FROM MATCH (n)

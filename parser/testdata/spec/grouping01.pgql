@@ -1,0 +1,3 @@
+  SELECT n.first_name, COUNT(*), AVG(n.age)
+    FROM MATCH (n:Person)
+GROUP BY n.first_name

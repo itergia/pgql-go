@@ -1,0 +1,61 @@
+CREATE PROPERTY GRAPH hr
+  VERTEX TABLES (
+    employees LABEL employee
+      PROPERTIES ARE ALL COLUMNS EXCEPT ( job_id, manager_id, department_id ),
+    departments LABEL department
+      PROPERTIES ( department_id, department_name ),
+    jobs LABEL job
+      PROPERTIES ARE ALL COLUMNS,
+    job_history
+      PROPERTIES ( start_date, end_date ),
+    locations LABEL location
+      PROPERTIES ARE ALL COLUMNS EXCEPT ( country_id ),
+    countries LABEL country
+      PROPERTIES ARE ALL COLUMNS EXCEPT ( region_id ),
+    regions LABEL region
+  )
+  EDGE TABLES (
+    employees AS works_for
+      SOURCE KEY ( employee_id ) REFERENCES employees ( employee_id )
+      DESTINATION KEY ( manager_id ) REFERENCES employees ( employee_id )
+      NO PROPERTIES,
+    employees AS works_at
+      SOURCE KEY ( employee_id ) REFERENCES employees ( employee_id )
+      DESTINATION departments
+      NO PROPERTIES,
+    employees AS works_as
+      SOURCE KEY ( employee_id ) REFERENCES employees ( employee_id )
+      DESTINATION jobs
+      NO PROPERTIES,
+    departments AS managed_by
+      SOURCE KEY ( department_id ) REFERENCES departments ( department_id )
+      DESTINATION employees
+      NO PROPERTIES,
+    job_history AS for_employee
+      SOURCE KEY ( employee_id, start_date ) REFERENCES job_history ( employee_id, start_date)
+      DESTINATION employees
+      NO PROPERTIES,
+    job_history AS for_department
+      SOURCE KEY ( employee_id, start_date ) REFERENCES job_history ( employee_id, start_date)
+      DESTINATION departments
+      NO PROPERTIES,
+    job_history AS for_job
+      SOURCE KEY ( employee_id, start_date ) REFERENCES job_history ( employee_id, start_date)
+      DESTINATION jobs
+      NO PROPERTIES,
+    departments AS department_located_in
+      SOURCE KEY ( department_id ) REFERENCES departments ( department_id )
+      DESTINATION locations
+      LABEL located_in
+      NO PROPERTIES,
+    locations AS location_located_in
+      SOURCE KEY ( location_id ) REFERENCES locations ( location_id )
+      DESTINATION countries
+      LABEL located_in
+      NO PROPERTIES,
+    countries AS country_located_in
+      SOURCE KEY ( country_id ) REFERENCES countries ( country_id )
+      DESTINATION regions
+      LABEL located_in
+      NO PROPERTIES
+  )

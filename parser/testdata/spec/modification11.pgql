@@ -1,0 +1,5 @@
+UPDATE v SET ( v.carOwner = true )
+     , u SET ( u.weight = 3500 )
+     , e SET ( e.since = DATE '2010-01-03' )
+  FROM MATCH (v:Person) <-[e:belongs_to]- (u:Car)
+ WHERE v.name = 'John'

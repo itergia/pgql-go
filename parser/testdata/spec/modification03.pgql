@@ -1,0 +1,3 @@
+  INSERT VERTEX x LABELS ( Profession ) PROPERTIES ( x.name = y.profession )
+    FROM MATCH (y:Person)
+GROUP BY y.profession

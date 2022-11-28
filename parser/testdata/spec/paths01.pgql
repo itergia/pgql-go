@@ -1,0 +1,6 @@
+SELECT a.number AS a,
+       b.number AS b,
+       COUNT(e) AS pathLength,
+       ARRAY_AGG(e.amount) AS amounts
+  FROM MATCH ANY SHORTEST (a:Account) -[e:transaction]->* (b:Account)
+ WHERE a.number = 10039 AND b.number = 2090

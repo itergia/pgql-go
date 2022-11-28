@@ -1,0 +1,2 @@
+UPDATE x SET ( x.a = y.b, x.b = 12 )
+  FROM MATCH (x) -> (y)

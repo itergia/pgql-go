@@ -1,0 +1,2 @@
+DELETE x
+  FROM MATCH (x)

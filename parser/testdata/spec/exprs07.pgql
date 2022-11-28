@@ -1,0 +1,5 @@
+  SELECT v.number AS account_number, MATCH_NUMBER(v), ELEMENT_NUMBER(v)
+    FROM MATCH ALL (a1:Account) -[:transaction]->{,4} (a2:Account)
+           ONE ROW PER VERTEX ( v )
+   WHERE a1.number = 10039 AND a2.number = 2090
+ORDER BY MATCH_NUMBER(v), ELEMENT_NUMBER(v)

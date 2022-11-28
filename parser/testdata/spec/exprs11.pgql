@@ -1,0 +1,3 @@
+  SELECT math.tan(n.angle) AS tangent
+    FROM MATCH (n)
+ORDER BY tangent

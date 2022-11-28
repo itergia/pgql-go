@@ -1,0 +1,3 @@
+UPDATE v SET ( v.a = 65 - v.age )
+  FROM MATCH (v:Person) -> (u:Person)
+ WHERE v.name = 'John'

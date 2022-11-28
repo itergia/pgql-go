@@ -1,0 +1,3 @@
+SELECT src, SUM(e.weight), dst
+  FROM MATCH ANY SHORTEST (src) -[e]->* (dst)
+ WHERE src.age < dst.age

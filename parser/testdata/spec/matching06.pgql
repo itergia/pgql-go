@@ -1,0 +1,3 @@
+SELECT m.name AS name, m.dob AS dob
+  FROM MATCH (n) -[e]-> (m)
+ WHERE n.name = 'Kathrine' AND n.dob <= m.dob

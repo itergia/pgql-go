@@ -1,0 +1,3 @@
+  SELECT f.name
+    FROM MATCH (f:Person)
+ORDER BY f.age ASC, f.salary DESC

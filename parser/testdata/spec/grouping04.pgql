@@ -1,0 +1,4 @@
+  SELECT n.age, COUNT(*)
+    FROM MATCH (n)
+GROUP BY n.age
+ORDER BY n.age

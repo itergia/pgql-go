@@ -1,0 +1,2 @@
+INSERT VERTEX x LABELS ( Male ) PROPERTIES ( x.age = y.age )
+  FROM MATCH (y:Male)

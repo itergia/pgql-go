@@ -1,0 +1,4 @@
+INSERT EDGE e BETWEEN x AND y
+DELETE z
+  FROM MATCH (x) -> (y), MATCH (z)
+ WHERE id(z) = 11

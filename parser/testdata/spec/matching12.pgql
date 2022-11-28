@@ -1,0 +1,4 @@
+SELECT p1.name AS p1, p2.name AS p2, e1 = e2
+  FROM MATCH (p1:Person) -[e1:knows]-> (riya:Person)
+     , MATCH (p2:Person) -[e2:knows]-> (riya)
+ WHERE riya.name = 'Riya'

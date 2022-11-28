@@ -1,0 +1,4 @@
+INSERT EDGE e BETWEEN x AND y
+UPDATE y SET ( y.a = 12 )
+  FROM MATCH (x), MATCH (y)
+ WHERE id(x) = 1 AND id(y) = 2

@@ -1,0 +1,5 @@
+SELECT ARRAY_AGG(e1.weight), ARRAY_AGG(e2.weight)
+  FROM MATCH (start) -> (src)
+     , MATCH TOP 3 SHORTEST (src) (-[e1]->)* (mid)
+     , MATCH ANY SHORTEST (mid) (-[e2]->)* (dst)
+     , MATCH (dst) -> ("end")

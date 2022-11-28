@@ -1,0 +1,10 @@
+CREATE PROPERTY GRAPH multi
+  VERTEX TABLES (
+    SocialNetwork.Person,
+    HR.Employees LABEL Employee
+  )
+  EDGE TABLES (
+    MySchema.SameAs
+      SOURCE KEY ( firstName, lastName ) REFERENCES Person ( firstName, lastName )
+      DESTINATION KEY ( first_name, last_name ) REFERENCES Employee ( first_name, last_name )
+  )

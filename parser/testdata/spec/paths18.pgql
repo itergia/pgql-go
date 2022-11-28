@@ -1,0 +1,11 @@
+  SELECT COUNT(e) AS num_hops
+       , p1.name AS start
+       , ARRAY_AGG ( CASE
+                       WHEN has_label(dst, 'Account')
+                         THEN CAST(dst.number AS STRING)
+                       ELSE dst.name
+                     END
+                   ) AS "path"
+    FROM MATCH ANY SHORTEST (p1:Person) (-[e]- (dst))* (p2:Person)
+   WHERE p1.name = 'Camille' AND p2.name = 'Liam'
+ORDER BY num_hops

@@ -1,0 +1,2 @@
+SELECT *
+  FROM MATCH (IS Person) -[:likes|knows]-> (IS Person)

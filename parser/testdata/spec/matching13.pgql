@@ -1,0 +1,2 @@
+SELECT *
+  FROM MATCH (n) -[e1]- (m) -[e2]- (o)

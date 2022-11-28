@@ -1,0 +1,2 @@
+SELECT LABEL(e)
+  FROM MATCH (n:Person) -[e]-> (m:Person)

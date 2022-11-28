@@ -1,0 +1,7 @@
+  SELECT v.number AS account_nr, MATCH_NUMBER(v) AS match_nr, ELEMENT_NUMBER(v) AS elem_nr
+       , LISTAGG(t.amount, ' + ') || ' = ', SUM(t.amount) AS total_amount
+    FROM MATCH (p1:Person) <-[:owner]- (a1:Account) ONE ROW PER MATCH
+       , MATCH (p2:Person) <-[:owner]- (a2:Account) ONE ROW PER MATCH
+       , MATCH ALL (a1) -[t:transaction]->{,4} (a2) ONE ROW PER VERTEX (v)
+   WHERE p1.name = 'Camille' AND p2.name = 'Liam'
+ORDER BY MATCH_NUMBER(v), ELEMENT_NUMBER(v)

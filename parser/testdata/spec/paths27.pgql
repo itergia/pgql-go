@@ -1,0 +1,5 @@
+SELECT COUNT(e) AS num_hops
+     , SUM(e.amount) AS total_amount
+     , ARRAY_AGG(e.amount) AS amounts_along_path
+  FROM MATCH ANY CHEAPEST (a:Account) (-[e:transaction]-> COST e.amount)* (b:Account)
+ WHERE a.number = 10039 AND b.number = 2090

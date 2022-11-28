@@ -1,0 +1,4 @@
+SELECT n.age
+  FROM MATCH (n)
+ WHERE n.name = ?
+    OR n.age > ?

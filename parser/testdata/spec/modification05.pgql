@@ -1,0 +1,4 @@
+INSERT EDGE e BETWEEN x AND y LABELS ( knows )
+  FROM MATCH (x:Person)
+     , MATCH (y:Person)
+ WHERE id(x) = 1 AND id(y) = 2

@@ -1,0 +1,5 @@
+SELECT p2.name AS friend, u.name AS university
+  FROM MATCH (p1:Person) -[:knows]-> (p2:Person)
+     , MATCH (p1) -[:studentOf]-> (u:University)
+     , MATCH (p2) -[:studentOf]-> (u)
+ WHERE p1.name = 'Lee'

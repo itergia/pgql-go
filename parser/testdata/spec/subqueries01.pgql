@@ -1,0 +1,3 @@
+SELECT fof.name, COUNT(friend) AS num_common_friends
+  FROM MATCH (p:Person) -[:has_friend]-> (friend:Person) -[:has_friend]-> (fof:Person)
+ WHERE NOT EXISTS ( SELECT * FROM MATCH (p) -[:has_friend]-> (fof) )

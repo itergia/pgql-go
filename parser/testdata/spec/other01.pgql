@@ -1,0 +1,3 @@
+SELECT "N"."DOB"
+  FROM MATCH ("N":"PERSON") ON "MYGRAPH"
+ WHERE "N"."FIRSTNAME" = 'Nikita'

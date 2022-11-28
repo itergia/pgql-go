@@ -1,0 +1,4 @@
+  SELECT label(n) AS lbl, COUNT(*)
+    FROM MATCH (n)
+GROUP BY lbl
+ORDER BY COUNT(*) DESC

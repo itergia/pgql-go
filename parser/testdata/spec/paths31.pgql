@@ -1,0 +1,13 @@
+  SELECT COUNT(e) AS num_hops
+       , ARRAY_AGG( CASE label(n_x)
+                      WHEN 'Person' THEN n_x.name
+                      WHEN 'Company' THEN n_x.name
+                      WHEN 'Account' THEN CAST(n_x.number AS STRING)
+                    END ) AS names_or_numbers
+       , SUM( CASE label(n_x) WHEN 'Person' THEN 8 ELSE 1 END ) AS total_cost
+    FROM MATCH TOP 4 CHEAPEST
+          (a:Account)
+            (-[e]- (n_x) COST CASE label(n_x) WHEN 'Person' THEN 3 ELSE 1 END)*
+              (c:Company)
+   WHERE a.number = 10039 AND c.name = 'Oracle'
+ORDER BY total_cost

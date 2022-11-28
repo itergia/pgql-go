@@ -1,0 +1,8 @@
+  SELECT b.number AS b,
+         COUNT(e) AS pathLength,
+         ARRAY_AGG(e.amount) AS transactions
+    FROM MATCH ANY SHORTEST (a:Account) -[e:transaction]->* (b:Account)
+   WHERE a.number = 10039 AND
+         (b.number = 8021 OR b.number = 1001 OR b.number = 2090) AND
+         COUNT(e) <= 2
+ORDER BY pathLength

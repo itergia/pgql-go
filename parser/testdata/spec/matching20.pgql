@@ -1,0 +1,3 @@
+  SELECT n.* PREFIX 'n_', e.* PREFIX 'e_', m.* PREFIX 'm_'
+    FROM MATCH (n:Account) -[e:transaction]-> (m:Account)
+ORDER BY "e_amount"

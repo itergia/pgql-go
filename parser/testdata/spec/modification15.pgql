@@ -1,0 +1,2 @@
+DELETE x, y
+  FROM MATCH (x) -> (y)

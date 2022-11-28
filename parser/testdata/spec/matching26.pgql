@@ -1,0 +1,2 @@
+SELECT *
+  FROM MATCH (x:Person) -[e IS likes|knows]-> (y:Person)

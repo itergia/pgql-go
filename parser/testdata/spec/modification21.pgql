@@ -1,0 +1,3 @@
+UPDATE x SET ( x.a = 11 )
+DELETE y
+  FROM MATCH (x) -> (y)

@@ -1,0 +1,3 @@
+SELECT p1.name AS p1, p2.name AS p2, p3.name AS p3
+  FROM MATCH (p1:Person) -[:knows]-> (p2:Person) -[:knows]-> (p3:Person)
+ WHERE p1.name = 'Lee' AND p1 <> p3

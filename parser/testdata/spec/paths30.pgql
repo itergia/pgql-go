@@ -1,0 +1,6 @@
+  SELECT COUNT(e) AS num_hops
+       , SUM(e.amount) AS total_amount
+       , ARRAY_AGG(e.amount) AS amounts_along_path
+    FROM MATCH TOP 3 CHEAPEST (a:Account) (-[e:transaction]-> COST e.amount)* (a)
+   WHERE a.number = 10039
+ORDER BY total_amount

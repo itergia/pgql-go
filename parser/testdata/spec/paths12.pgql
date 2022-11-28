@@ -1,0 +1,3 @@
+SELECT y.name
+  FROM MATCH (x:Person) -/:knows{,2}/-> (y)
+ WHERE x.name = 'Judith'

@@ -1,0 +1,8 @@
+  SELECT v1.number AS v1_account_nr, e.amount, v2.number AS v2_account_nr, MATCH_NUMBER(e) AS match_nr
+       , ELEMENT_NUMBER(v1) AS v1_elem_nr, ELEMENT_NUMBER(e) AS e_elem_nr
+       , ELEMENT_NUMBER(v2) AS v2_elem_nr, SUM(t.amount) AS total_amount
+    FROM MATCH (p1:Person) <-[:owner]- (a1:Account) ONE ROW PER MATCH
+       , MATCH (p2:Person) <-[:owner]- (a2:Account) ONE ROW PER MATCH
+       , MATCH ALL (a1) -[t:transaction]->{1,4} (a2) ONE ROW PER STEP (v1, e, v2)
+   WHERE p1.name = 'Camille' AND p2.name = 'Liam'
+ORDER BY MATCH_NUMBER(e), ELEMENT_NUMBER(e)

@@ -1,0 +1,2 @@
+SELECT *
+  FROM MATCH (n1) -[e1]-> (n2) <-[e2]- (n3)

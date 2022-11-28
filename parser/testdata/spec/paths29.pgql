@@ -1,0 +1,9 @@
+SELECT COUNT(e) AS num_hops
+     , SUM(e.amount) AS total_amount
+     , ARRAY_AGG(e.amount) AS amounts_along_path
+  FROM MATCH ANY CHEAPEST (p1:Person) (-[e:owner|transaction]-
+                                      COST CASE
+                                             WHEN e.amount IS NULL THEN 1
+                                             ELSE e.amount
+                                           END)* (p2:Person)
+ WHERE p1.name = 'Nikita' AND p2.name = 'Liam'

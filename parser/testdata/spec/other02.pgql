@@ -1,0 +1,4 @@
+SELECT *
+  FROM MATCH (n)
+ WHERE n."My string with single quotes ', double quotes "", backslashes \
+new lines and tabs	." = 123

@@ -1,0 +1,3 @@
+INSERT
+  VERTEX v LABELS ( Male ) PROPERTIES ( v.age = 23, v.name = 'John' ),
+  VERTEX u LABELS ( Female ) PROPERTIES ( u.age = 24, u.name = 'Jane' )

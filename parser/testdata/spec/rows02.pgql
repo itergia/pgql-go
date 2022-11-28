@@ -1,0 +1,7 @@
+  SELECT a1.number AS account1, a2.number AS account2
+       , LISTAGG(t.amount, ' + ') || ' = ', SUM(t.amount) AS total_amount
+    FROM MATCH (p1:Person) <-[:owner]- (a1:Account) ONE ROW PER MATCH
+       , MATCH (p2:Person) <-[:owner]- (a2:Account) ONE ROW PER MATCH
+       , MATCH ALL (a1) -[t:transaction]->{,4} (a2) ONE ROW PER MATCH
+   WHERE p1.name = 'Camille' AND p2.name = 'Liam'
+ORDER BY total_amount

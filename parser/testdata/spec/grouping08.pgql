@@ -1,0 +1,4 @@
+  SELECT n.name
+    FROM MATCH (n) -[:has_friend]-> (m)
+GROUP BY n
+  HAVING COUNT(m) > 10

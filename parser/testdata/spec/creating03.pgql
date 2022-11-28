@@ -1,0 +1,17 @@
+CREATE PROPERTY GRAPH hr_simplified
+  VERTEX TABLES (
+    employees LABEL employee
+      PROPERTIES ARE ALL COLUMNS EXCEPT ( job_id, manager_id, department_id ),
+    departments LABEL department
+      PROPERTIES ( department_id, department_name )
+  )
+  EDGE TABLES (
+    employees AS works_for
+      SOURCE KEY ( employee_id ) REFERENCES employees ( employee_id )
+      DESTINATION KEY ( manager_id ) REFERENCES employees ( employee_id )
+      NO PROPERTIES,
+    departments AS managed_by
+      SOURCE KEY ( department_id ) REFERENCES departments ( department_id )
+      DESTINATION employees
+      NO PROPERTIES
+  )

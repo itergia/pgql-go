@@ -1,0 +1,3 @@
+SELECT n.name, n.dob
+  FROM MATCH (n)
+ WHERE n.dob > DATE '1995-01-01'

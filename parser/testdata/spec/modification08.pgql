@@ -1,0 +1,4 @@
+INSERT VERTEX x LABELS ( Person ) PROPERTIES ( x.name = 'John' )
+     , EDGE e BETWEEN x AND y LABELS ( knows ) PROPERTIES ( e.since = DATE '2017-09-21' )
+  FROM MATCH (y)
+ WHERE y.name = 'Jane'

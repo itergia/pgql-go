@@ -1,0 +1,3 @@
+SELECT src, ARRAY_AGG(e.weight), ARRAY_AGG(v1.age), ARRAY_AGG(v2.age), dst
+  FROM MATCH TOP 3 SHORTEST (src) ((v1) -[e]-> (v2))* (dst)
+ WHERE src.age < dst.age

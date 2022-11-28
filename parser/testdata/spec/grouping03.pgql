@@ -1,0 +1,4 @@
+  SELECT n.prop1, n.prop2, COUNT(*)
+    FROM MATCH (n)
+GROUP BY n.prop1, n.prop2
+  HAVING n.prop1 IS NOT NULL AND n.prop2 IS NOT NULL

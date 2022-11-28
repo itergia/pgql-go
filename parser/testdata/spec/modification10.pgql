@@ -1,0 +1,3 @@
+UPDATE x SET ( x.age = 42 )
+  FROM MATCH (x:Person)
+ WHERE x.name = 'John'

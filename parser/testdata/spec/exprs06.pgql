@@ -1,0 +1,2 @@
+SELECT LABELS(n)
+  FROM MATCH (n:Employee|Manager)

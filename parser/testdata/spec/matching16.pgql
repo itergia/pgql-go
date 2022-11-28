@@ -1,0 +1,3 @@
+  SELECT n.age * 2 - 1 AS pivot, n.name, n
+    FROM MATCH (n:Person) -> (m:Car)
+ORDER BY pivot

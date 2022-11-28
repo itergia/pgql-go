@@ -1,0 +1,4 @@
+  PATH connects_to AS (:Generator) -[:has_connector]-> (c:Connector) <-[:has_connector]- (:Generator)
+                WHERE c.status = 'OPERATIONAL'
+SELECT generatorA.location, generatorB.location
+  FROM MATCH (generatorA) -/:connects_to+/-> (generatorB)

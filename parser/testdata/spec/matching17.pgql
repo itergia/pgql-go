@@ -1,0 +1,3 @@
+SELECT *
+  FROM MATCH (n:Person) -> (m) -> (w)
+     , MATCH (n) -> (w) -> (m)

@@ -1,0 +1,2 @@
+SELECT AVG(DISTINCT m.age)
+  FROM MATCH (m:Person)

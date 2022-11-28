@@ -1,0 +1,3 @@
+  SELECT n.first_name, n.last_name, COUNT(*)
+    FROM MATCH (n:Person)
+GROUP BY n.first_name, n.last_name

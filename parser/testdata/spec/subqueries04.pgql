@@ -1,0 +1,16 @@
+  SELECT p.name AS name
+       , ( SELECT SUM(t.amount)
+             FROM MATCH (a) <-[t:transaction]- (:Account)
+         ) AS sum_incoming
+       , ( SELECT SUM(t.amount)
+             FROM MATCH (a) -[t:transaction]-> (:Account)
+         ) AS sum_outgoing
+       , ( SELECT COUNT(DISTINCT p2)
+             FROM MATCH (a) -[t:transaction]- (:Account) -[:owner]-> (p2:Person)
+            WHERE p2 <> p
+         ) AS num_persons_transacted_with
+       , ( SELECT COUNT(DISTINCT c)
+             FROM MATCH (a) -[t:transaction]- (:Account) -[:owner]-> (c:Company)
+         ) AS num_companies_transacted_with
+    FROM MATCH (p:Person) <-[:owner]- (a:Account)
+ORDER BY sum_outgoing + sum_incoming DESC
