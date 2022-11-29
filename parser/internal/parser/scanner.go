@@ -27,7 +27,8 @@ func (s *scanner) Errors() []error {
 
 // Lex implements yyLexer and returns the next token.
 func (s *scanner) Lex(lval *yySymType) int {
-	lval.P = s.pos
+	v := lexValue{P: s.pos}
+	lval.L = &v
 
 	for {
 		switch s.peekRune() {
@@ -36,8 +37,8 @@ func (s *scanner) Lex(lval *yySymType) int {
 
 		case ' ', '\t', '\n':
 			// Optimized common cases, so we don't need IsSpace.
-			lval.PreWS = append(lval.PreWS, s.readRune())
-			lval.P = s.pos
+			v.PreWS = append(v.PreWS, s.readRune())
+			v.P = s.pos
 
 		case ':', '?', ';', ',', '{', '}', '(', ')', '=', '+', '*', '%':
 			return int(s.readRune())
@@ -50,13 +51,13 @@ func (s *scanner) Lex(lval *yySymType) int {
 			}
 			switch r {
 			case '*': // Block comment.
-				lval.PreWS = append(lval.PreWS, '/', s.readRune())
+				v.PreWS = append(v.PreWS, '/', s.readRune())
 				ss, err := s.readWhile(func(r rune) bool { return r != '*' })
 				if err != nil {
 					s.errs = append(s.errs, err)
 					return bad
 				}
-				lval.PreWS = append(lval.PreWS, []rune(ss)...)
+				v.PreWS = append(v.PreWS, []rune(ss)...)
 				r := s.readRune()
 				r2 := s.readRune()
 				if r2 == bad {
@@ -65,8 +66,8 @@ func (s *scanner) Lex(lval *yySymType) int {
 					s.errs = append(s.errs, fmt.Errorf("unexpected character %q, expected %q (asterisk not allowed in comments)", r2, '/'))
 					return bad
 				}
-				lval.PreWS = append(lval.PreWS, r, r2)
-				lval.P = s.pos
+				v.PreWS = append(v.PreWS, r, r2)
+				v.P = s.pos
 
 			case '-':
 				s.readRune()
@@ -210,7 +211,7 @@ func (s *scanner) Lex(lval *yySymType) int {
 				s.errs = append(s.errs, err)
 				return bad
 			}
-			lval.S = ss
+			v.S = ss
 			return STRING_LITERAL
 
 		case '"':
@@ -219,7 +220,7 @@ func (s *scanner) Lex(lval *yySymType) int {
 				s.errs = append(s.errs, err)
 				return bad
 			}
-			lval.S = ss
+			v.S = ss
 			return QUOTED_IDENTIFIER
 
 		case '.':
@@ -232,7 +233,7 @@ func (s *scanner) Lex(lval *yySymType) int {
 				return bad
 			}
 			if ss != "" {
-				lval.S = "." + ss
+				v.S = "." + ss
 				return UNSIGNED_DECIMAL
 			}
 			return '.'
@@ -257,11 +258,11 @@ func (s *scanner) Lex(lval *yySymType) int {
 						s.errs = append(s.errs, err)
 						return bad
 					}
-					lval.S = ss + "." + ss2
+					v.S = ss + "." + ss2
 					return UNSIGNED_DECIMAL
 
 				default:
-					lval.S = ss
+					v.S = ss
 					return UNSIGNED_INTEGER
 				}
 
@@ -276,13 +277,13 @@ func (s *scanner) Lex(lval *yySymType) int {
 				if ok {
 					return tok
 				}
-				lval.S = ss
+				v.S = ss
 				return UNQUOTED_IDENTIFIER
 
 			case unicode.IsSpace(r):
 				// Ignore.
-				lval.PreWS = append(lval.PreWS, s.readRune())
-				lval.P = s.pos
+				v.PreWS = append(v.PreWS, s.readRune())
+				v.P = s.pos
 
 			default:
 				s.errs = append(s.errs, fmt.Errorf("unexpected character %q", r))

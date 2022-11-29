@@ -29,7 +29,7 @@ func TestParse(t *testing.T) {
 			}
 			bs = append(bs, ';', '\n')
 
-			if err := Parse(bytes.NewReader(bs)); err != nil {
+			if _, err := Parse(bytes.NewReader(bs)); err != nil {
 				t.Fatalf("Parse failed: %v", err)
 			}
 		})

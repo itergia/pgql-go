@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/itergia/pgql-go/ast"
 )
 
 // Position indicates a scanner position in the input stream.
@@ -35,10 +37,16 @@ type RuneReader interface {
 }
 
 func init() {
+	// The terse error messages are simply "syntax error" which is
+	// never good enough.
 	yyErrorVerbose = true
 }
 
-func Parse(r RuneReader) error {
+type Statements struct {
+	Stmts []ast.Stmt
+}
+
+func Parse(r RuneReader) (*Statements, error) {
 	pc := parserContext{scanner: newScanner(r)}
 	var yy yyParserImpl
 	if yy.Parse(&pc) != 0 || len(pc.errs) > 0 {
@@ -48,19 +56,24 @@ func Parse(r RuneReader) error {
 		if len(errs) == 0 {
 			errs = []error{errors.New("parsing failed without further information")}
 		}
-		return parseError{errs: errs, pos: yy.lval.P}
+		return nil, parseError{errs: errs, pos: yy.lval.L.P}
 	}
 
-	return nil
+	return &Statements{Stmts: pc.stmts}, nil
 }
 
 type parserContext struct {
 	*scanner
-	errs []error
+	errs  []error
+	stmts []ast.Stmt
 }
 
 func (pc *parserContext) Error(e string) {
 	pc.errs = append(pc.errs, errors.New(e))
+}
+
+func (pc *parserContext) Stmts(ss []ast.Stmt) {
+	pc.stmts = ss
 }
 
 type parseError struct {

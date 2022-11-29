@@ -1,6 +1,22 @@
 // Implements https://pgql-lang.org/spec/1.5/.
 %{
 package parser
+
+import (
+	"github.com/itergia/pgql-go/ast"
+	"github.com/itergia/pgql-go/token"
+)
+
+type yyParam interface {
+	yyLexer
+	Stmts([]ast.Stmt)
+}
+
+type lexValue struct {
+	P Position
+	PreWS []rune
+	S string
+}
 %}
 
 // Keywords.
@@ -98,118 +114,137 @@ package parser
 
 // Literals.
 
-%token TRUE FALSE
-%token UNSIGNED_INTEGER
-%token UNSIGNED_DECIMAL
-%token STRING_LITERAL UNQUOTED_IDENTIFIER QUOTED_IDENTIFIER
+%token <L> TRUE FALSE UNSIGNED_INTEGER UNSIGNED_DECIMAL
+%token <L> STRING_LITERAL UNQUOTED_IDENTIFIER QUOTED_IDENTIFIER
 
 // Productions.
 
+%type <Stmts> PgqlStatements PgqlStatement CreatePropertyGraph DropPropertyGraph
+%type <VTables> VertexTables VertexTableList VertexTable LabelAndPropertiesClause
+%type <ETables> EdgeTables OptEdgeTables EdgeTableList EdgeTable
+%type <VTableRef> SourceVertexTable DestinationVertexTable
+%type <Props> OptPropertiesClause PropertiesClause PropertiesAreAllColumns PropertyExpressions NoProperties
+%type <PExprs> PropertyExpressionList PropertyExpression ColumnReferenceOrCastSpecification
+%type <QIdent> GraphName TableName SchemaQualifiedName SchemaIdentifierPart
+%type <Ident> Identifier TableAlias OptTableAlias ColumnName LabelClause OptLabelClause Label ColumnReference PropertyName ColumnReference
+%type <Idents> OptKeyClause KeyClause ColumnNameList OptExceptColumns ExceptColumns ColumnReferenceList
+
 %union {
-  P Position
-  PreWS []rune
-  S string
+  L *lexValue
+
+  Stmts []ast.Stmt
+  VTables []*ast.VertexTableDecl
+  ETables []*ast.EdgeTableDecl
+  VTableRef *ast.VertexTableRef
+  Props *ast.PropsClause
+  PExprs []*ast.PropExpr
+  QIdent *ast.QIdent
+  Ident *ast.Ident
+  Idents []*ast.Ident
 }
 
-%start PgqlStatements
+%start start
 
 %%
 
 // Not part of the specification.
 
+start: PgqlStatements  { yylex.(yyParam).Stmts($1) }
+     ;
+
 PgqlStatements: PgqlStatement ';'
-              | PgqlStatements PgqlStatement ';'
+              | PgqlStatements PgqlStatement ';'  { $$ = append($1, $2[0]) }
               ;
 
 // Main Query Structure
 
 PgqlStatement: CreatePropertyGraph
              | DropPropertyGraph
-             | Query
+             | Query                {/*TODO*/}
              ;
 
 // Creating a Property Graph
 
-CreatePropertyGraph: CREATE PROPERTY GRAPH GraphName VertexTables OptEdgeTables
+CreatePropertyGraph: CREATE PROPERTY GRAPH GraphName VertexTables OptEdgeTables  { $$ = []ast.Stmt{&ast.CreateStmt{GraphName: $4, VertexTables: $5, EdgeTables: $6}} }
                    ;
 
 GraphName: SchemaQualifiedName
          ;
 
-SchemaQualifiedName: Identifier
-                   | SchemaIdentifierPart Identifier
+SchemaQualifiedName: Identifier                       { $$ = &ast.QIdent{Names: []*ast.Ident{$1}} }
+                   | SchemaIdentifierPart Identifier  { $$ = &ast.QIdent{Names: append($1.Names, $2)} }
                    ;
 
-SchemaIdentifierPart: Identifier '.'
+SchemaIdentifierPart: Identifier '.'  { $$ = &ast.QIdent{Names: []*ast.Ident{$1}} }
                     ;
 
-VertexTables: VERTEX TABLES '(' VertexTableList ')'
+VertexTables: VERTEX TABLES '(' VertexTableList ')'  { $$ = $4 }
             ;
 
 VertexTableList: VertexTable
-               | VertexTableList ',' VertexTable
+               | VertexTableList ',' VertexTable  { $$ = append($1, $3[0]) }
                ;
 
-OptEdgeTables: /* empty */
+OptEdgeTables: /* empty */  { $$ = nil }
              | EdgeTables
              ;
 
-EdgeTables: EDGE TABLES '(' EdgeTableList ')'
+EdgeTables: EDGE TABLES '(' EdgeTableList ')'  { $$ = $4 }
           ;
 
 EdgeTableList: EdgeTable
-             | EdgeTableList ',' EdgeTable
+             | EdgeTableList ',' EdgeTable  { $$ = append($1, $3[0]) }
              ;
 
-VertexTable: TableName OptTableAlias OptKeyClause LabelAndPropertiesClause
+VertexTable: TableName OptTableAlias OptKeyClause LabelAndPropertiesClause  { $$ = []*ast.VertexTableDecl{{TableName: $1, TableAlias: $2, Label: $4[0].Label, Props: $4[0].Props, Keys: $3}} }
            ;
 
-LabelAndPropertiesClause: OptLabelClause OptPropertiesClause
+LabelAndPropertiesClause: OptLabelClause OptPropertiesClause  { $$ = []*ast.VertexTableDecl{{Label: $1, Props: $2}} }
                         ;
 
 TableName: SchemaQualifiedName
          ;
 
-EdgeTable: TableName OptTableAlias OptKeyClause SourceVertexTable DestinationVertexTable LabelAndPropertiesClause
+EdgeTable: TableName OptTableAlias OptKeyClause SourceVertexTable DestinationVertexTable LabelAndPropertiesClause  { $$ = []*ast.EdgeTableDecl{{TableName: $1, TableAlias: $2, Source: $4, Dest: $5, Label: $6[0].Label, Props: $6[0].Props, Keys: $3}} }
          ;
 
 // In the 1.5 spec, KEY and the referenced columns are missing.
-SourceVertexTable: SOURCE KEY '(' ColumnNameList ')' REFERENCES TableName '(' ColumnNameList ')'
-                 | SOURCE TableName
+SourceVertexTable: SOURCE KEY '(' ColumnNameList ')' REFERENCES TableName '(' ColumnNameList ')'  { $$ = &ast.VertexTableRef{Keys: $4, TableName: $7, Columns: $9} }
+                 | SOURCE TableName                                                               { $$ = &ast.VertexTableRef{TableName: $2} }
                  ;
 
 // In the 1.5 spec, KEY and the referenced columns are missing.
-DestinationVertexTable: DESTINATION KEY '(' ColumnNameList ')' REFERENCES TableName '(' ColumnNameList ')'
-                      | DESTINATION TableName
+DestinationVertexTable: DESTINATION KEY '(' ColumnNameList ')' REFERENCES TableName '(' ColumnNameList ')'  { $$ = &ast.VertexTableRef{Keys: $4, TableName: $7, Columns: $9} }
+                      | DESTINATION TableName                                                               { $$ = &ast.VertexTableRef{TableName: $2} }
                       ;
 
-OptTableAlias: /* empty */
+OptTableAlias: /* empty */  { $$ = nil }
              | TableAlias
              ;
 
-TableAlias: AS Identifier
+TableAlias: AS Identifier  { $$ = $2 }
           | Identifier
           ;
 
-OptKeyClause: /* empty */
+OptKeyClause: /* empty */  { $$ = nil }
             | KeyClause
             ;
 
-KeyClause: KEY '(' ColumnNameList ')'
+KeyClause: KEY '(' ColumnNameList ')'  { $$ = $3 }
          ;
 
-ColumnNameList: ColumnName
-              | ColumnNameList ',' ColumnName
+ColumnNameList: ColumnName                     { $$ = []*ast.Ident{$1} }
+              | ColumnNameList ',' ColumnName  { $$ = append($1, $3) }
               ;
 
 ColumnName: Identifier
           ;
 
-OptLabelClause: /* empty */
+OptLabelClause: /* empty */  { $$ = nil }
               | LabelClause
               ;
 
-LabelClause: LABEL Label
+LabelClause: LABEL Label  { $$ = $2 }
            ;
 
 LabelList: Label
@@ -219,7 +254,7 @@ LabelList: Label
 Label: Identifier
      ;
 
-OptPropertiesClause: /* empty */
+OptPropertiesClause: /* empty */       { $$ = nil }
                    | PropertiesClause
                    ;
 
@@ -228,37 +263,37 @@ PropertiesClause: PropertiesAreAllColumns
                 | NoProperties
                 ;
 
-PropertiesAreAllColumns: PROPERTIES OptAre ALL COLUMNS OptExceptColumns
+PropertiesAreAllColumns: PROPERTIES OptAre ALL COLUMNS OptExceptColumns  { $$ = &ast.PropsClause{Except: $5} }
                        ;
 
 OptAre: /* empty */
       | ARE
       ;
 
-OptExceptColumns: /* empty */
+OptExceptColumns: /* empty */    { $$ = nil }
                 | ExceptColumns
                 ;
 
-ExceptColumns: EXCEPT '(' ColumnReferenceList ')'
+ExceptColumns: EXCEPT '(' ColumnReferenceList ')'  { $$ = $3 }
              ;
 
-ColumnReferenceList: ColumnReference
-                   | ColumnReferenceList ',' ColumnReference
+ColumnReferenceList: ColumnReference                          { $$ = []*ast.Ident{$1} }
+                   | ColumnReferenceList ',' ColumnReference  { $$ = append($1, $3) }
                    ;
 
-PropertyExpressions: PROPERTIES '(' PropertyExpressionList ')'
+PropertyExpressions: PROPERTIES '(' PropertyExpressionList ')'  { $$ = &ast.PropsClause{Exprs: $3} }
                    ;
 
 PropertyExpressionList: PropertyExpression
-                      | PropertyExpressionList ',' PropertyExpression
+                      | PropertyExpressionList ',' PropertyExpression  { $$ = append($1, $3[0]) }
                       ;
 
-PropertyExpression: ColumnReferenceOrCastSpecification AS PropertyName
+PropertyExpression: ColumnReferenceOrCastSpecification AS PropertyName  { $$ = $1; $$[0].Name = $3 }
                   | ColumnReferenceOrCastSpecification
                   ;
 
-ColumnReferenceOrCastSpecification: ColumnReference
-                                  | CastSpecification
+ColumnReferenceOrCastSpecification: ColumnReference    { $$ = []*ast.PropExpr{{Column: $1}} }
+                                  | CastSpecification  { yylex.Error("TODO: CastSpecification not implemented"); return 1 }
                                   ;
 
 PropertyName: Identifier
@@ -267,10 +302,10 @@ PropertyName: Identifier
 ColumnReference: Identifier
                ;
 
-NoProperties: NO PROPERTIES
+NoProperties: NO PROPERTIES  { $$ = &ast.PropsClause{None: true} }
             ;
 
-DropPropertyGraph: DROP PROPERTY GRAPH GraphName
+DropPropertyGraph: DROP PROPERTY GRAPH GraphName  { $$ = []ast.Stmt{&ast.DropStmt{GraphName: $4}} }
                  ;
 
 // Graph Pattern Matching
@@ -1005,6 +1040,6 @@ DeleteClause: DELETE VariableReferenceList
 
 // Other Syntactic Rules
 
-Identifier: UNQUOTED_IDENTIFIER
-          | QUOTED_IDENTIFIER
+Identifier: UNQUOTED_IDENTIFIER  { $$ = &ast.Ident{Name: $1.S, Pos: ast.Pos($1.P.Offset)} }
+          | QUOTED_IDENTIFIER    { $$ = &ast.Ident{Name: token.UnquoteIdentifier($1.S), Pos: ast.Pos($1.P.Offset)} }
           ;
