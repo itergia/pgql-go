@@ -100,3 +100,10 @@ func (e parseError) Error() string {
 
 	return sb.String()
 }
+
+func indexOr[T any](s []T, i int, def T) T {
+	if i < len(s) {
+		return s[i]
+	}
+	return def
+}

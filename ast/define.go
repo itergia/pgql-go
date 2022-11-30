@@ -47,5 +47,5 @@ type VertexTableRef struct {
 type PropExpr struct {
 	Name   *Ident
 	Column *Ident
-	CastAs Expr // The 1.5 spec suggests that the ValueExpression in the cast can only be a simple column name.
+	CastAs *CastExpr // The 1.5 spec suggests that the ValueExpression in the cast can only be a simple column name.
 }
