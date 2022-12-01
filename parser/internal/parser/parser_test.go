@@ -827,6 +827,17 @@ func TestParse(t *testing.T) {
 			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}, Where: &ast.InExpr{Subject: uiLit(2)}}},
 		},
 
+		{
+			"precMultiplicationAddition",
+			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(WHERE), ui(2), kw('*'), ui(3), kw('+'), ui(4), kw(';')),
+			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}, Where: &ast.OpExpr{Op: '+', Args: []ast.Expr{&ast.OpExpr{Op: '*', Args: []ast.Expr{uiLit(2), uiLit(3)}}, uiLit(4)}}}},
+		},
+		{
+			"precAdditionMultiplication",
+			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(WHERE), ui(2), kw('+'), ui(3), kw('*'), ui(4), kw(';')),
+			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}, Where: &ast.OpExpr{Op: '+', Args: []ast.Expr{uiLit(2), &ast.OpExpr{Op: '*', Args: []ast.Expr{uiLit(3), uiLit(4)}}}}}},
+		},
+
 		// Subqueries
 
 		{
