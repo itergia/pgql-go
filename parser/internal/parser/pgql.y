@@ -617,8 +617,8 @@ TopKCheapestPathPattern: TOP KValue CHEAPEST SourceVertexPattern QuantifiedPathP
                        ;
 
 // Quantifier must have an upper bound.
-AllPathPattern: ALL SourceVertexPattern QuantifiedPathPatternPrimary DestinationVertexPattern          { $$ = []*ast.PathPattern{{Vs: append($2, $4[0]), Es: $3, Cardinality: ast.AllCardinality}} }
-              | ALL '(' SourceVertexPattern QuantifiedPathPatternPrimary DestinationVertexPattern ')'  { $$ = []*ast.PathPattern{{Vs: append($3, $5[0]), Es: $4, Cardinality: ast.AllCardinality}} }
+AllPathPattern: ALL SourceVertexPattern QuantifiedPathPatternPrimary DestinationVertexPattern          { $$ = []*ast.PathPattern{{Vs: append($2, $4[0]), Es: $3, Cardinality: ast.AllCardinality}}; reportError(yylex, checkPathPattern($$)) }
+              | ALL '(' SourceVertexPattern QuantifiedPathPatternPrimary DestinationVertexPattern ')'  { $$ = []*ast.PathPattern{{Vs: append($3, $5[0]), Es: $4, Cardinality: ast.AllCardinality}}; reportError(yylex, checkPathPattern($$)) }
               ;
 
 // Number of Rows Per Match
@@ -1021,7 +1021,7 @@ ModifyQuery: ModifyQueryFull
 // allow an InsertClause alone. This creates a conflict. Parser code
 // must validate that if FromClause is missing, then ModificationList
 // is a single InsertClause and no other rules are present.
-ModifyQueryFull: OptPathPatternMacros ModificationList OptFromClause OptWhereClause OptGroupByClause OptHavingClause OptOrderByClause OptLimitOffsetClauses  { $$ = []ast.Stmt{&ast.ModifyStmt{PathMacros: $1, Mods: $2, From: $3, Where: $4, GroupBy: $5, Having: $6, OrderBy: $7, Limit: $8[0], Offset: $8[1]}} }
+ModifyQueryFull: OptPathPatternMacros ModificationList OptFromClause OptWhereClause OptGroupByClause OptHavingClause OptOrderByClause OptLimitOffsetClauses  { stmt := &ast.ModifyStmt{PathMacros: $1, Mods: $2, From: $3, Where: $4, GroupBy: $5, Having: $6, OrderBy: $7, Limit: $8[0], Offset: $8[1]}; $$ = []ast.Stmt{stmt}; reportError(yylex, checkModifyQuerySimple(stmt)) }
                ;
 
 ModificationList: Modification

@@ -391,13 +391,13 @@ func TestParse(t *testing.T) {
 		},
 		{
 			"selectAllPath",
-			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw(ALL), kw('('), kw(')'), kw('-'), kw('('), kw(')'), kw(';')),
-			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}, {}}, Es: []*ast.PathPatternPrimary{{Es: []*ast.EdgePattern{{Dir: ast.AnyDir}}}}, Cardinality: ast.AllCardinality}}}}}},
+			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw(ALL), kw('('), kw(')'), kw('-'), kw('?'), kw('('), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}, {}}, Es: []*ast.PathPatternPrimary{{Es: []*ast.EdgePattern{{Dir: ast.AnyDir}}, Quantity: &ast.Quantifier{Max: uiLit(1)}}}, Cardinality: ast.AllCardinality}}}}}},
 		},
 		{
 			"selectAllPathParen",
-			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw(ALL), kw('('), kw('('), kw(')'), kw('-'), kw('('), kw(')'), kw(')'), kw(';')),
-			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}, {}}, Es: []*ast.PathPatternPrimary{{Es: []*ast.EdgePattern{{Dir: ast.AnyDir}}}}, Cardinality: ast.AllCardinality}}}}}},
+			testToks(kw(SELECT), kw('*'), kw(FROM), kw(MATCH), kw(ALL), kw('('), kw('('), kw(')'), kw('-'), kw('?'), kw('('), kw(')'), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}, {}}, Es: []*ast.PathPatternPrimary{{Es: []*ast.EdgePattern{{Dir: ast.AnyDir}}, Quantity: &ast.Quantifier{Max: uiLit(1)}}}, Cardinality: ast.AllCardinality}}}}}},
 		},
 
 		// Number of Rows Per Match
