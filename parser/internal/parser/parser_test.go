@@ -835,6 +835,68 @@ func TestParse(t *testing.T) {
 			[]ast.Stmt{&ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}, Where: &ast.OpExpr{Op: EXISTS, Args: []ast.Expr{&ast.SubqueryExpr{Query: &ast.SelectStmt{From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}}}}}}},
 		},
 
+		// Graph Modification
+		{
+			"modifySimpleInsert",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}}}}}}},
+		},
+		{
+			"modifyFullDelete",
+			testToks(kw(PATH), id("apath"), kw(AS), kw('('), kw(')'), kw(DELETE), id("avar"), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(WHERE), ui(2), kw(GROUP), kw(BY), ui(3), kw(HAVING), ui(4), kw(ORDER), kw(BY), ui(5), kw(LIMIT), ui(6), kw(OFFSET), ui(7), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{PathMacros: []*ast.PathMacroClause{{Name: &ast.Ident{Name: "apath"}, Pattern: &ast.PathPattern{Vs: []*ast.VertexPattern{{}}}}}, Mods: []ast.ModClause{&ast.DeleteClause{Vars: []*ast.Ident{{Name: "avar"}}}}, From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}, Where: uiLit(2), GroupBy: []*ast.NamedExpr{{Expr: uiLit(3)}}, Having: uiLit(4), OrderBy: []*ast.OrderTerm{{Expr: uiLit(5), Order: ast.DefaultOrder}}, Limit: uiLit(6), Offset: uiLit(7)}},
+		},
+		{
+			"modifyTwoDeletes",
+			testToks(kw(DELETE), id("avar"), kw(DELETE), id("avar2"), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.DeleteClause{Vars: []*ast.Ident{{Name: "avar"}}}, &ast.DeleteClause{Vars: []*ast.Ident{{Name: "avar2"}}}}, From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}}},
+		},
+		{
+			"modifySimpleInsertInto",
+			testToks(kw(INSERT), kw(INTO), id("agraph"), kw(VERTEX), id("avar"), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Into: &ast.QIdent{Names: []*ast.Ident{{Name: "agraph"}}}, Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}}}}}}},
+		},
+		{
+			"modifySimpleInsertVerticesAndEdges",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(','), kw(EDGE), id("avar2"), kw(BETWEEN), id("avar3"), kw(AND), id("avar4"), kw(','), kw(VERTEX), id("avar5"), kw(','), kw(EDGE), id("avar6"), kw(BETWEEN), id("avar7"), kw(AND), id("avar8"), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}}, {Var: &ast.Ident{Name: "avar5"}}}, Es: []*ast.EdgeInsertion{{Var: &ast.Ident{Name: "avar2"}, Source: &ast.Ident{Name: "avar3"}, Dest: &ast.Ident{Name: "avar4"}}, {Var: &ast.Ident{Name: "avar6"}, Source: &ast.Ident{Name: "avar7"}, Dest: &ast.Ident{Name: "avar8"}}}}}}},
+		},
+		{
+			"modifySimpleInsertVertexWithLabel",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(LABELS), kw('('), id("albl"), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}, Labels: []*ast.Ident{{Name: "albl"}}}}}}}},
+		},
+		{
+			"modifySimpleInsertVertexWithTwoLabels",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(LABELS), kw('('), id("albl"), kw(','), id("albl2"), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}, Labels: []*ast.Ident{{Name: "albl"}, {Name: "albl2"}}}}}}}},
+		},
+		{
+			"modifySimpleInsertVertexWithProp",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(PROPERTIES), kw('('), id("avar2"), kw('.'), id("aprop"), kw('='), ui(2), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}, Props: []*ast.PropAssignment{{Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar2"}, {Name: "aprop"}}}, Value: uiLit(2)}}}}}}}},
+		},
+		{
+			"modifySimpleInsertVertexWithTwoProps",
+			testToks(kw(INSERT), kw(VERTEX), id("avar"), kw(PROPERTIES), kw('('), id("avar2"), kw('.'), id("aprop"), kw('='), ui(2), kw(','), id("avar3"), kw('.'), id("aprop2"), kw('='), ui(3), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: &ast.Ident{Name: "avar"}, Props: []*ast.PropAssignment{{Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar2"}, {Name: "aprop"}}}, Value: uiLit(2)}, {Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar3"}, {Name: "aprop2"}}}, Value: uiLit(3)}}}}}}}},
+		},
+		{
+			"modifySimpleInsertEdgeWithLabel",
+			testToks(kw(INSERT), kw(EDGE), id("avar2"), kw(BETWEEN), id("avar3"), kw(AND), id("avar4"), kw(LABELS), kw('('), id("albl"), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.InsertClause{Es: []*ast.EdgeInsertion{{Var: &ast.Ident{Name: "avar2"}, Source: &ast.Ident{Name: "avar3"}, Dest: &ast.Ident{Name: "avar4"}, Labels: []*ast.Ident{{Name: "albl"}}}}}}}},
+		},
+		{
+			"modifyUpdate",
+			testToks(kw(UPDATE), id("avar"), kw(SET), kw('('), id("avar2"), kw('.'), id("aprop"), kw('='), ui(2), kw(')'), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.UpdateClause{Updates: []*ast.Update{{Var: &ast.Ident{Name: "avar"}, Props: []*ast.PropAssignment{{Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar2"}, {Name: "aprop"}}}, Value: uiLit(2)}}}}}}, From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}}},
+		},
+		{
+			"modifyUpdateTwoProps",
+			testToks(kw(UPDATE), id("avar"), kw(SET), kw('('), id("avar2"), kw('.'), id("aprop"), kw('='), ui(2), kw(','), id("avar3"), kw('.'), id("aprop2"), kw('='), ui(3), kw(')'), kw(FROM), kw(MATCH), kw('('), kw(')'), kw(';')),
+			[]ast.Stmt{&ast.ModifyStmt{Mods: []ast.ModClause{&ast.UpdateClause{Updates: []*ast.Update{{Var: &ast.Ident{Name: "avar"}, Props: []*ast.PropAssignment{{Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar2"}, {Name: "aprop"}}}, Value: uiLit(2)}, {Prop: &ast.QIdent{Names: []*ast.Ident{{Name: "avar3"}, {Name: "aprop2"}}}, Value: uiLit(3)}}}}}}, From: []*ast.MatchClause{{Patterns: []*ast.PathPattern{{Vs: []*ast.VertexPattern{{}}}}}}}},
+		},
+
 		// Other Syntactic Rules
 
 		{

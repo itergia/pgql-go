@@ -126,7 +126,7 @@ type lexValue struct {
 
 // Productions.
 
-%type <Stmts> PgqlStatements PgqlStatement CreatePropertyGraph DropPropertyGraph Query SelectQuery
+%type <Stmts> PgqlStatements PgqlStatement CreatePropertyGraph DropPropertyGraph Query SelectQuery ModifyQuery ModifyQueryFull
 %type <VTables> VertexTables VertexTableList VertexTable LabelAndPropertiesClause
 %type <ETables> EdgeTables OptEdgeTables EdgeTableList EdgeTable
 %type <VTableRef> SourceVertexTable DestinationVertexTable
@@ -142,14 +142,18 @@ type lexValue struct {
 %type <EPats> EdgePattern OutgoingEdgePattern IncomingEdgePattern AnyDirectedEdgePattern
 %type <MatchRows> OptRowsPerMatch RowsPerMatch OneRowPerMatch OneRowPerVertex OneRowPerStep
 %type <OTerms> OptOrderByClause OrderByClause OrderTermList OrderTerm
+%type <Mods> ModificationList Modification InsertClause UpdateClause DeleteClause
+%type <Insert> GraphElementInsertionList GraphElementInsertion LabelsAndProperties
+%type <Updates> GraphElementUpdateList GraphElementUpdate
+%type <PropAss> OptPropertiesSpecification PropertiesSpecification PropertyAssignmentList PropertyAssignment
 %type <NExprs> ExpAsVarList ExpAsVar OptGroupByClause GroupByClause
 %type <Exprs> OptLimitOffsetClauses LimitOffsetClauses OptArgumentList ArgumentList InValueList ValueExpressionList
 %type <Expr> OptWhereClause WhereClause Aggregation CountAggregation MinAggregation MaxAggregation AvgAggregation SumAggregation ArrayAggregation ListaggAggregation OptListaggSeparator ListaggSeparator OptHavingClause HavingClause LimitClause OffsetClause LimitOffsetValue ValueExpression OptCostClause CostClause BracketedValueExpression BindVariable ArithmeticExpression UnaryMinus Multiplication Division Modulo Addition Subtraction RelationalExpression Equal NotEqual Greater Less GreaterOrEqual LessOrEqual LogicalExpression Not And Or StringConcat IsNullPredicate IsNotNullPredicate CharacterSubstring StartPosition StringLength ExtractFunction FunctionInvocation CastSpecification CaseExpression SimpleCase SearchedCase OptElseClause ElseClause InPredicate NotInPredicate ExistsPredicate Subquery ScalarSubquery
 %type <Whens> WhenClauseList WhenClause
 %type <Quant> OptGraphPatternQuantifier GraphPatternQuantifier ZeroOrMore OneOrMore Optional ExactlyN NOrMore BetweenNAndM BetweenZeroAndM
-%type <QIdent> GraphName TableName SchemaQualifiedName SchemaIdentifierPart OptOnClause OnClause PropertyAccess
-%type <Ident> Identifier TableAlias OptTableAlias ColumnName LabelClause OptLabelClause Label ColumnReference PropertyName ColumnReference OptVariableName VariableName VertexVariable VertexVariable1 VertexVariable2 EdgeVariable VariableReference ExtractField FunctionName
-%type <Idents> OptKeyClause KeyClause ColumnNameList OptExceptColumns ExceptColumns ColumnReferenceList OptLabelPredicate LabelPredicate LabelAlt
+%type <QIdent> GraphName TableName SchemaQualifiedName SchemaIdentifierPart OptOnClause OnClause PropertyAccess OptIntoClause IntoClause
+%type <Ident> Identifier TableAlias OptTableAlias ColumnName LabelClause OptLabelClause Label ColumnReference PropertyName ColumnReference OptVariableName VariableName VertexVariable VertexVariable1 VertexVariable2 EdgeVariable VariableReference ExtractField FunctionName VertexReference
+%type <Idents> OptKeyClause KeyClause ColumnNameList OptExceptColumns ExceptColumns ColumnReferenceList OptLabelPredicate LabelPredicate LabelList LabelAlt OptLabelSpecification LabelSpecification VariableReferenceList
 %type <BLit> AllPropertiesPrefix KValue Literal StringLiteral NumericLiteral BooleanLiteral DateLiteral TimeLiteral TimestampLiteral IntervalLiteral DateTimeField
 %type <B> OptDistinct
 %type <I> DataType
@@ -173,6 +177,10 @@ type lexValue struct {
   EPats []*ast.EdgePattern
   MatchRows *ast.MatchRows
   OTerms []*ast.OrderTerm
+  Mods []ast.ModClause
+  Insert *ast.InsertClause
+  Updates []*ast.Update
+  PropAss []*ast.PropAssignment
   NExprs []*ast.NamedExpr
   Exprs []ast.Expr
   Expr ast.Expr
@@ -290,8 +298,8 @@ OptLabelClause: /* empty */  { $$ = nil }
 LabelClause: LABEL Label  { $$ = $2 }
            ;
 
-LabelList: Label
-         | LabelList ',' Label
+LabelList: Label                { $$ = []*ast.Ident{$1} }
+         | LabelList ',' Label  { $$ = append($1, $3) }
          ;
 
 Label: Identifier
@@ -354,7 +362,7 @@ DropPropertyGraph: DROP PROPERTY GRAPH GraphName  { $$ = []ast.Stmt{&ast.DropStm
 // Graph Pattern Matching
 
 Query: SelectQuery
-     | ModifyQuery  { /*panic("TODO: ModifyQuery not implemented")*/ }
+     | ModifyQuery
      ;
 
 SelectQuery: OptPathPatternMacros SelectClause FromClause OptWhereClause OptGroupByClause OptHavingClause OptOrderByClause OptLimitOffsetClauses  { $$ = []ast.Stmt{&ast.SelectStmt{PathMacros: $1, Distinct: $2.Distinct, Sels: $2.Sels, From: $3, Where: $4, GroupBy: $5, Having: $6, OrderBy: $7, Limit: $8[0], Offset: $8[1]}} }
@@ -762,8 +770,8 @@ ValueExpression: VariableReference         { $$ = $1 }
                | ScalarSubquery            { $$ = $1 }
                ;
 
-VariableReferenceList: VariableReference
-                     | VariableReferenceList ',' VariableReference
+VariableReferenceList: VariableReference                            { $$ = []*ast.Ident{$1} }
+                     | VariableReferenceList ',' VariableReference  { $$ = append($1, $3) }
                      ;
 
 VariableReference: VariableName
@@ -1013,11 +1021,11 @@ ModifyQuery: ModifyQueryFull
 // allow an InsertClause alone. This creates a conflict. Parser code
 // must validate that if FromClause is missing, then ModificationList
 // is a single InsertClause and no other rules are present.
-ModifyQueryFull: OptPathPatternMacros ModificationList OptFromClause OptWhereClause OptGroupByClause OptHavingClause OptOrderByClause OptLimitOffsetClauses
+ModifyQueryFull: OptPathPatternMacros ModificationList OptFromClause OptWhereClause OptGroupByClause OptHavingClause OptOrderByClause OptLimitOffsetClauses  { $$ = []ast.Stmt{&ast.ModifyStmt{PathMacros: $1, Mods: $2, From: $3, Where: $4, GroupBy: $5, Having: $6, OrderBy: $7, Limit: $8[0], Offset: $8[1]}} }
                ;
 
 ModificationList: Modification
-                | ModificationList Modification
+                | ModificationList Modification  { $$ = append($1, $2[0]) }
                 ;
 
 Modification: InsertClause
@@ -1025,62 +1033,63 @@ Modification: InsertClause
             | DeleteClause
             ;
 
-InsertClause: INSERT OptIntoClause GraphElementInsertionList
+InsertClause: INSERT OptIntoClause GraphElementInsertionList  { $$ = []ast.ModClause{&ast.InsertClause{Into: $2, Vs: $3.Vs, Es: $3.Es}} }
             ;
 
 GraphElementInsertionList: GraphElementInsertion
-                         | GraphElementInsertionList ',' GraphElementInsertion
+                         | GraphElementInsertionList ',' GraphElementInsertion  { $$ = $1; $$.Vs = append($$.Vs, $3.Vs...); $$.Es = append($$.Es, $3.Es...) }
                          ;
 
-OptIntoClause: /* empty */
+OptIntoClause: /* empty */  { $$ = nil }
              | IntoClause
              ;
 
-IntoClause: INTO GraphName
+IntoClause: INTO GraphName  { $$ = $2 }
           ;
 
-GraphElementInsertion: VERTEX OptVariableName LabelsAndProperties
-                     | EDGE OptVariableName BETWEEN VertexReference AND VertexReference LabelsAndProperties
+GraphElementInsertion: VERTEX OptVariableName LabelsAndProperties                                            { $$ = &ast.InsertClause{Vs: []*ast.VertexInsertion{{Var: $2, Labels: $3.Vs[0].Labels, Props: $3.Vs[0].Props}}} }
+                     | EDGE OptVariableName BETWEEN VertexReference AND VertexReference LabelsAndProperties  { $$ = &ast.InsertClause{Es: []*ast.EdgeInsertion{{Var: $2, Source: $4, Dest: $6, Labels: $7.Vs[0].Labels, Props: $7.Vs[0].Props}}} }
                      ;
 
 VertexReference: Identifier
                ;
 
-LabelsAndProperties: OptLabelSpecification OptPropertiesSpecification
+// Reusing VertexInsertion to carry Labels and Props together.
+LabelsAndProperties: OptLabelSpecification OptPropertiesSpecification  { $$ =  &ast.InsertClause{Vs: []*ast.VertexInsertion{{Labels: $1, Props: $2}}} }
                    ;
 
-OptLabelSpecification: /* empty */
+OptLabelSpecification: /* empty */         { $$ = nil }
                      | LabelSpecification
                      ;
 
-LabelSpecification: LABELS '(' LabelList ')'
+LabelSpecification: LABELS '(' LabelList ')'  { $$ = $3 }
                   ;
 
-OptPropertiesSpecification: /* empty */
+OptPropertiesSpecification: /* empty */              { $$ = nil }
                           | PropertiesSpecification
                           ;
 
-PropertiesSpecification: PROPERTIES '(' PropertyAssignmentList ')'
+PropertiesSpecification: PROPERTIES '(' PropertyAssignmentList ')'  { $$ = $3 }
                        ;
 
 PropertyAssignmentList: PropertyAssignment
-                      | PropertyAssignmentList ',' PropertyAssignment
+                      | PropertyAssignmentList ',' PropertyAssignment  { $$ = append($1, $3[0]) }
                       ;
 
-PropertyAssignment: PropertyAccess '=' ValueExpression
+PropertyAssignment: PropertyAccess '=' ValueExpression  { $$ = []*ast.PropAssignment{{Prop: $1, Value: $3}} }
                   ;
 
-UpdateClause: UPDATE GraphElementUpdateList
+UpdateClause: UPDATE GraphElementUpdateList  { $$ = []ast.ModClause{&ast.UpdateClause{Updates: $2}} }
             ;
 
-GraphElementUpdateList: GraphElementUpdate
-                      | GraphElementUpdateList ',' GraphElementUpdate
+GraphElementUpdateList: GraphElementUpdate                             { $$ = $1 }
+                      | GraphElementUpdateList ',' GraphElementUpdate  { $$ = append($1, $3[0]) }
                       ;
 
-GraphElementUpdate: VariableReference SET '(' PropertyAssignmentList ')'
+GraphElementUpdate: VariableReference SET '(' PropertyAssignmentList ')'  { $$ = []*ast.Update{{Var: $1, Props: $4}} }
                   ;
 
-DeleteClause: DELETE VariableReferenceList
+DeleteClause: DELETE VariableReferenceList  { $$ = []ast.ModClause{&ast.DeleteClause{Vars: $2}} }
             ;
 
 // Other Syntactic Rules
