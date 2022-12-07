@@ -18,6 +18,8 @@ We built this to study PGQL as a contender for the query language in Itergia Cor
 As such, we don't know if this will ever be more than a parser and AST definition.
 Reach out to us if you are interested in using it (and don't want to fork it.)
 
+There is an accompanying [blog post](http://127.0.0.1:4000/a/2022/12/pgql-go).
+
 ## Example
 
 A query:
@@ -38,6 +40,14 @@ INSERT EDGE e BETWEEN x AND y
 UPDATE y SET ( y.a = 12 )
   FROM MATCH (x), MATCH (y)
  WHERE id(x) = 1 AND id(y) = 2
+```
+
+## Building
+
+```console
+$ go mod download
+$ go generate ./...
+$ go test ./...
 ```
 
 ## Compliance
